@@ -1,0 +1,77 @@
+# Artillery Smoke Test Configuration
+# Quick validation test to ensure APIs are working
+# Run: npx artillery run load-tests/smoke.config.yml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    - duration: 10
+      arrivalRate: 1
+      name: "Smoke test"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+  ensure:
+    p95: 500
+    maxErrorRate: 0
+
+scenarios:
+  # Test all main endpoints
+  - name: "Full API Smoke Test"
+    flow:
+      # Landing page
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+      # Auth pages
+      - get:
+          url: "/auth/login"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/auth/signup"
+          expect:
+            - statusCode: 200
+
+      # Companies API
+      - get:
+          url: "/api/companies"
+          expect:
+            - statusCode: 200
+            - hasProperty: "companies"
+      - get:
+          url: "/api/companies?industry=IT%20Services&limit=5"
+          expect:
+            - statusCode: 200
+
+      # Real Estate API
+      - get:
+          url: "/api/real-estate"
+          expect:
+            - statusCode: 200
+            - hasProperty: "properties"
+      - get:
+          url: "/api/real-estate?propertyType=Office&limit=5"
+          expect:
+            - statusCode: 200
+
+      # Subscription API (should work without auth for read)
+      - get:
+          url: "/api/subscriptions"
+          expect:
+            - statusCode:
+                - 200
+                - 401  # Expected without auth
+
+      # Tracked assets API
+      - get:
+          url: "/api/tracked"
+          expect:
+            - statusCode:
+                - 200
+                - 401  # Expected without auth

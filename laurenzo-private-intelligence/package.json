@@ -14,7 +14,16 @@
     "test:coverage": "jest --coverage",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:visual": "playwright test --project=visual",
+    "test:visual:update": "playwright test --project=visual --update-snapshots",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "jest --testPathPattern=unit",
     "test:all": "npm run test && npm run test:e2e",
+    "test:load": "artillery run load-tests/artillery.config.yml",
+    "test:load:smoke": "artillery run load-tests/smoke.config.yml",
+    "test:load:stress": "artillery run load-tests/api-stress.config.yml",
+    "test:load:soak": "artillery run load-tests/soak.config.yml",
+    "test:load:report": "artillery run load-tests/artillery.config.yml --output load-tests/report.json && artillery report load-tests/report.json",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.ts"
   },
   "dependencies": {
@@ -53,9 +62,12 @@
     "@react-pdf/renderer": "^3.1.14"
   },
   "devDependencies": {
+    "artillery": "^2.0.0",
+    "artillery-plugin-expect": "^2.0.0",
     "@playwright/test": "^1.41.0",
     "@testing-library/jest-dom": "^6.2.0",
     "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.6",
     "@types/react": "^18.2.46",

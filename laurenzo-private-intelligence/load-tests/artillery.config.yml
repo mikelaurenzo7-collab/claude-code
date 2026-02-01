@@ -1,0 +1,125 @@
+# Artillery Load Testing Configuration
+# Run: npx artillery run load-tests/artillery.config.yml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Warm up"
+    # Ramp-up phase
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 50
+      name: "Ramp up load"
+    # Sustained load
+    - duration: 120
+      arrivalRate: 50
+      name: "Sustained load"
+    # Spike test
+    - duration: 30
+      arrivalRate: 100
+      name: "Spike test"
+    # Cool down
+    - duration: 30
+      arrivalRate: 10
+      name: "Cool down"
+
+  # Default headers
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+  # Plugins
+  plugins:
+    expect: {}
+
+  # Variables for test data
+  variables:
+    industries:
+      - "IT Services"
+      - "Manufacturing"
+      - "Healthcare"
+      - "Business Services"
+      - "Logistics"
+    propertyTypes:
+      - "Office"
+      - "Industrial"
+      - "Retail"
+      - "Multifamily"
+      - "Mixed-Use"
+
+  # Response time thresholds
+  ensure:
+    p95: 500
+    p99: 1000
+    maxErrorRate: 1
+
+scenarios:
+  # Landing page load test
+  - name: "Landing Page"
+    weight: 20
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+  # API: List companies
+  - name: "Get Companies List"
+    weight: 25
+    flow:
+      - get:
+          url: "/api/companies"
+          expect:
+            - statusCode: 200
+            - hasProperty: "companies"
+      - think: 2
+
+  # API: List companies with filters
+  - name: "Get Companies with Filters"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/companies?industry={{ $randomItem(industries) }}&limit=20&offset=0"
+          expect:
+            - statusCode: 200
+      - think: 1
+
+  # API: Get single company
+  - name: "Get Company Detail"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/companies"
+          capture:
+            - json: "$.companies[0].id"
+              as: "companyId"
+      - get:
+          url: "/api/companies/{{ companyId }}"
+          ifTrue: "companyId"
+          expect:
+            - statusCode: 200
+      - think: 3
+
+  # API: List real estate
+  - name: "Get Real Estate List"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/real-estate"
+          expect:
+            - statusCode: 200
+      - think: 2
+
+  # API: Real estate with filters
+  - name: "Get Real Estate with Filters"
+    weight: 10
+    flow:
+      - get:
+          url: "/api/real-estate?propertyType={{ $randomItem(propertyTypes) }}&limit=20"
+          expect:
+            - statusCode: 200
+      - think: 1

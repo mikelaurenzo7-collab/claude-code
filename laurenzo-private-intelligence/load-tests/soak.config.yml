@@ -1,0 +1,110 @@
+# Artillery Soak Test Configuration
+# Long-running test to detect memory leaks and performance degradation
+# Run: npx artillery run load-tests/soak.config.yml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Slow ramp up
+    - duration: 60
+      arrivalRate: 1
+      rampTo: 20
+      name: "Ramp up"
+    # Long sustained moderate load
+    - duration: 1800  # 30 minutes
+      arrivalRate: 20
+      name: "Soak test"
+    # Cool down
+    - duration: 60
+      arrivalRate: 20
+      rampTo: 1
+      name: "Ramp down"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+  variables:
+    industries:
+      - "IT Services"
+      - "Manufacturing"
+      - "Healthcare"
+      - "Business Services"
+      - "Logistics"
+    propertyTypes:
+      - "Office"
+      - "Industrial"
+      - "Retail"
+      - "Multifamily"
+
+  ensure:
+    p95: 500
+    p99: 1000
+    maxErrorRate: 1
+
+scenarios:
+  # Realistic user journey simulation
+  - name: "User Journey - Browse Companies"
+    weight: 30
+    flow:
+      # Land on homepage
+      - get:
+          url: "/"
+      - think: 2
+
+      # Navigate to companies
+      - get:
+          url: "/api/companies?limit=20"
+          capture:
+            - json: "$.companies[0].id"
+              as: "companyId"
+      - think: 3
+
+      # Filter by industry
+      - get:
+          url: "/api/companies?industry={{ $randomItem(industries) }}&limit=20"
+      - think: 2
+
+      # View company detail
+      - get:
+          url: "/api/companies/{{ companyId }}"
+          ifTrue: "companyId"
+      - think: 5
+
+  - name: "User Journey - Browse Real Estate"
+    weight: 30
+    flow:
+      # Land on homepage
+      - get:
+          url: "/"
+      - think: 2
+
+      # Navigate to real estate
+      - get:
+          url: "/api/real-estate?limit=20"
+          capture:
+            - json: "$.properties[0].id"
+              as: "propertyId"
+      - think: 3
+
+      # Filter by type
+      - get:
+          url: "/api/real-estate?propertyType={{ $randomItem(propertyTypes) }}&limit=20"
+      - think: 2
+
+      # View property detail
+      - get:
+          url: "/api/real-estate/{{ propertyId }}"
+          ifTrue: "propertyId"
+      - think: 5
+
+  - name: "API Only - Quick Browse"
+    weight: 40
+    flow:
+      - get:
+          url: "/api/companies?limit=10"
+      - think: 1
+      - get:
+          url: "/api/real-estate?limit=10"
+      - think: 1

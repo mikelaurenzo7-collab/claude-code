@@ -1,0 +1,94 @@
+# Artillery API Stress Test Configuration
+# Tests API endpoints under high load
+# Run: npx artillery run load-tests/api-stress.config.yml
+
+config:
+  target: "http://localhost:3000"
+  phases:
+    # Stress test - high sustained load
+    - duration: 300
+      arrivalRate: 100
+      name: "Stress test"
+
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+
+  variables:
+    industries:
+      - "IT Services"
+      - "Manufacturing"
+      - "Healthcare"
+      - "Business Services"
+      - "Logistics"
+      - "Industrial Distribution"
+      - "Professional Services"
+      - "Food & Beverage"
+    propertyTypes:
+      - "Office"
+      - "Industrial"
+      - "Retail"
+      - "Multifamily"
+      - "Mixed-Use"
+    cities:
+      - "New York"
+      - "Los Angeles"
+      - "Chicago"
+      - "Houston"
+      - "Dallas"
+      - "Atlanta"
+      - "Boston"
+      - "Denver"
+
+  ensure:
+    p95: 1000
+    p99: 2000
+    maxErrorRate: 5
+
+scenarios:
+  # Companies API stress test
+  - name: "Companies API Stress"
+    weight: 40
+    flow:
+      - loop:
+          - get:
+              url: "/api/companies?industry={{ $randomItem(industries) }}&limit={{ $randomNumber(10, 50) }}&offset={{ $randomNumber(0, 50) }}"
+              expect:
+                - statusCode: 200
+          - think: 0.5
+        count: 5
+
+  # Real Estate API stress test
+  - name: "Real Estate API Stress"
+    weight: 40
+    flow:
+      - loop:
+          - get:
+              url: "/api/real-estate?propertyType={{ $randomItem(propertyTypes) }}&city={{ $randomItem(cities) }}&limit={{ $randomNumber(10, 50) }}"
+              expect:
+                - statusCode: 200
+          - think: 0.5
+        count: 5
+
+  # Mixed workload
+  - name: "Mixed API Workload"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/companies?limit=10"
+          capture:
+            - json: "$.companies[0].id"
+              as: "companyId"
+      - get:
+          url: "/api/real-estate?limit=10"
+          capture:
+            - json: "$.properties[0].id"
+              as: "propertyId"
+      - get:
+          url: "/api/companies/{{ companyId }}"
+          ifTrue: "companyId"
+      - get:
+          url: "/api/real-estate/{{ propertyId }}"
+          ifTrue: "propertyId"
+      - think: 1
