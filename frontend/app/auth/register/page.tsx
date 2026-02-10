@@ -11,6 +11,7 @@ import { useAuthStore } from "@/lib/store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { analytics } from "@/lib/analytics";
 import toast from "react-hot-toast";
 
 const registerSchema = z.object({
@@ -52,8 +53,17 @@ export default function RegisterPage() {
       const user = await authApi.getMe();
       setUser(user);
 
+      // Track signup
+      analytics.signUp();
+
       toast.success("Account created! Welcome to Creator Studio.");
-      router.push("/dashboard");
+
+      // Redirect to onboarding for new users
+      if (!user.onboarding_completed) {
+        router.push("/onboarding");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Registration failed. Please try again.";
       toast.error(message);

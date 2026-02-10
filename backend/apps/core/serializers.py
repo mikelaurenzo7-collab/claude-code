@@ -5,6 +5,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from .models import Workspace, WorkspaceMember, GenerationJob
+from .email import send_welcome_email
 
 User = get_user_model()
 
@@ -57,6 +58,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
             role="owner",
         )
 
+        # Send welcome email (async, don't block registration)
+        try:
+            send_welcome_email(user)
+        except Exception:
+            pass  # Don't fail registration if email fails
+
         return user
 
 
@@ -70,6 +77,18 @@ class PasswordChangeSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect")
         return value
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for password reset request."""
+    email = serializers.EmailField(required=True)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for password reset confirmation."""
+    uid = serializers.CharField(required=True)
+    token = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, validators=[validate_password])
 
 
 # =============================================================================

@@ -42,6 +42,9 @@ whitenoise>=6.6
 # Monitoring
 sentry-sdk>=1.40
 
+# Email
+resend>=0.7
+
 # Development
 python-dotenv>=1.0
 ipython>=8.0

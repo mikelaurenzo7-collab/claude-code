@@ -273,6 +273,37 @@ LOGGING = {
 }
 
 # =============================================================================
+# Sentry Error Monitoring
+# =============================================================================
+SENTRY_DSN = env("SENTRY_DSN", default=None)
+
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    from sentry_sdk.integrations.celery import CeleryIntegration
+    from sentry_sdk.integrations.redis import RedisIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[
+            DjangoIntegration(),
+            CeleryIntegration(),
+            RedisIntegration(),
+        ],
+        traces_sample_rate=0.1,  # 10% of transactions for performance monitoring
+        profiles_sample_rate=0.1,
+        send_default_pii=False,  # Don't send user emails/IPs
+        environment=env("SENTRY_ENVIRONMENT", default="production"),
+    )
+
+# =============================================================================
+# Email Configuration (Resend)
+# =============================================================================
+RESEND_API_KEY = env("RESEND_API_KEY", default=None)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Creator Studio <hello@creatorstudio.app>")
+PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
+
+# =============================================================================
 # Security Settings (Production)
 # =============================================================================
 if not DEBUG:

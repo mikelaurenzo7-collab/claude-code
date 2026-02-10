@@ -7,7 +7,13 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenVerifyView,
 )
-from ..views import RegisterView, MeView, PasswordChangeView
+from ..views import (
+    RegisterView,
+    MeView,
+    PasswordChangeView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
+)
 
 urlpatterns = [
     # JWT Token endpoints
@@ -19,4 +25,6 @@ urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
     path("me/", MeView.as_view(), name="me"),
     path("password/change/", PasswordChangeView.as_view(), name="password_change"),
+    path("password/reset/", PasswordResetRequestView.as_view(), name="password_reset_request"),
+    path("password/reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
 ]
